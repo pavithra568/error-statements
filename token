@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract TVRechargeContract {
+    address public owner;
+    uint256 public maxWatchTime;
+    uint256 public availableWatchTime;
+
+    event WatchTimeConsumed(address indexed user, uint256 timeConsumed);
+    event WatchTimeAdded(address indexed user, uint256 timeAdded);
+
+    constructor(uint256 _maxWatchTime) {
+        owner = msg.sender;
+        availableWatchTime = _maxWatchTime;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can perform this action");
+        _;
+    }
+
+    function consumeWatchTime(uint256 _timeConsumed) external onlyOwner {
+        require(_timeConsumed > 0, "Watch time consumed must be greater than zero");
+        assert(_timeConsumed <= availableWatchTime);
+
+        availableWatchTime -= _timeConsumed;
+
+        emit WatchTimeConsumed(msg.sender, _timeConsumed);
+
+        if (availableWatchTime == 0) {
+            revert("Watch limit reached, please recharge");
+        }
+    }
+
+    function addWatchTime(uint256 _timeAdded) external onlyOwner {
+        assert(_timeAdded > 0 && _timeAdded < 300);
+        availableWatchTime += _timeAdded;
+        emit WatchTimeAdded(msg.sender, _timeAdded);
+    }
+}
